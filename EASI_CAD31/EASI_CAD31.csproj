@@ -1,11 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <assemblyName>EASI_CAD31</assemblyName>
+    <RootNamespace>EASI_CAD31</RootNamespace>
     <!-- <TargetFramework>net7.0</TargetFramework> -->
-    <TargetFrameworks>net48</TargetFrameworks>
-    <OutputType>Library</OutputType>
+    <!-- <TargetFrameworks>net7.0;net48</TargetFrameworks> -->
     <!-- <ImplicitUsings>enable</ImplicitUsings> -->
     <!-- <Nullable>enable</Nullable> -->
+    <!-- <TargetFrameworks>net48</TargetFrameworks> -->
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
