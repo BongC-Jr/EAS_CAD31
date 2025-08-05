@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\BCECS\\VSCode\\EAS_CAD31\\EASI_CAD31\\EASI_CAD31.csproj": {}
+  },
+  "projects": {
+    "D:\\BCECS\\VSCode\\EAS_CAD31\\EASI_CAD31\\EASI_CAD31.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\BCECS\\VSCode\\EAS_CAD31\\EASI_CAD31\\EASI_CAD31.csproj",
+        "projectName": "EASI_CAD31",
+        "projectPath": "D:\\BCECS\\VSCode\\EAS_CAD31\\EASI_CAD31\\EASI_CAD31.csproj",
+        "packagesPath": "C:\\Users\\B Cabebe Engineering\\.nuget\\packages\\",
+        "outputPath": "D:\\BCECS\\VSCode\\EAS_CAD31\\EASI_CAD31\\obj\\",
+        "projectStyle": "PackageReference",
+        "crossTargeting": true,
+        "configFilePaths": [
+          "C:\\Users\\B Cabebe Engineering\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "Google.Apis": {
+              "target": "Package",
+              "version": "[1.70.0, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.70.0, )"
+            },
+            "Google.Apis.Core": {
+              "target": "Package",
+              "version": "[1.70.0, )"
+            },
+            "Google.Apis.Sheets.v4": {
+              "target": "Package",
+              "version": "[1.70.0.3819, )"
+            },
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.2, )",
+              "autoReferenced": true
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100-preview.6.22352.1\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
