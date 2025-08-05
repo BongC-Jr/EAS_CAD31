@@ -1,0 +1,54 @@
+https://www.nuget.org/packages/google.apis#supportedframeworks-body-tab
+
+
+
+bash
+cd EASI_CAD31
+dotnet add package Google.Apis.Core --version 1.70.0
+
+
+
+
+I have this file along with .cs files in my .NET C# codes for AutoCAD in Visual Studio Community 2022. I migrated my code to VS Code and I am still targeting the Framework 4.8. I tested the compiled version using VSCode and as for now it works fine; however, I am wondering if this file is necessary to be included in my VSCode codes. If needed, how am I going to do it? 
+
+Packages.config file:
+<?xml version="1.0" encoding="utf-8"?>
+<packages>
+  <package id="Google.Apis" version="1.70.0" targetFramework="net48" />
+  <package id="Google.Apis.Auth" version="1.70.0" targetFramework="net48" />
+  <package id="Google.Apis.Core" version="1.70.0" targetFramework="net48" />
+  <package id="Google.Apis.Sheets.v4" version="1.70.0.3819" targetFramework="net48" />
+  <package id="Newtonsoft.Json" version="13.0.3" targetFramework="net47" />
+  <package id="System.CodeDom" version="9.0.7" targetFramework="net48" />
+  <package id="System.Management" version="9.0.7" targetFramework="net48" />
+</packages>
+
+Since you're targeting .NET Framework 4.8 and using VS Code, the packages.config file is still relevant for managing NuGet packages in your project.
+
+Migrate to PackageReference format (recommended)
+However, it's recommended to migrate your project to use the PackageReference format in your .csproj file instead of packages.config. This format is more modern and flexible.
+
+To migrate, you can use the following steps:
+
+(1. Unload your project: In VS Code, open the Command Palette (Ctrl + Shift + P) and select ".NET: Unload Project".)
+2. Edit the .csproj file: Open the .csproj file in VS Code and remove the packages.config file reference.
+3. Add PackageReference elements: For each package in your packages.config file, add a PackageReference element to your .csproj file. For example:
+
+<ItemGroup>
+  <PackageReference Include="Google.Apis" Version="1.70.0" />
+  <PackageReference Include="Google.Apis.Auth" Version="1.70.0" />
+  <PackageReference Include="Google.Apis.Core" Version="1.70.0" />
+  <PackageReference Include="Google.Apis.Sheets.v4" Version="1.70.0.3819" />
+  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  <PackageReference Include="System.CodeDom" Version="9.0.7" />
+  <PackageReference Include="System.Management" Version="9.0.7" />
+</ItemGroup>
+
+(4. Reload your project: In VS Code, open the Command Palette (Ctrl + Shift + P) and select ".NET: Reload Project".)
+
+Keep using packages.config
+If you prefer to keep using packages.config, you can continue to use it. However, make sure to update the NuGet packages using the nuget command-line tool or the NuGet package manager extension in VS Code.
+
+In either case, ensure that your .csproj file is correctly configured to reference the packages.config file or the PackageReference elements.
+
+Since your project is working fine, it's likely that the NuGet packages are already correctly configured. However, migrating to the PackageReference format can provide more flexibility and better support for modern .NET development.
