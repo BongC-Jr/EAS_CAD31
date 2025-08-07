@@ -1,7 +1,5 @@
 D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\obj\Debug\net48\EASI_CAD31.csproj.AssemblyReference.cache
 D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\obj\Debug\net48\EASI_CAD31.GeneratedMSBuildEditorConfig.editorconfig
-D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\obj\Debug\net48\EASI_CAD31.AssemblyInfoInputs.cache
-D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\obj\Debug\net48\EASI_CAD31.AssemblyInfo.cs
 D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\obj\Debug\net48\EASI_CAD31.csproj.CoreCompileInputs.cache
 D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\bin\Debug\net48\EASI_CAD31.dll
 D:\BCECS\VSCode\EAS_CAD31\EASI_CAD31\bin\Debug\net48\EASI_CAD31.pdb

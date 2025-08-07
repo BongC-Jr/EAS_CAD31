@@ -10,6 +10,9 @@
     <!-- <TargetFrameworks>net48</TargetFrameworks> -->
     <TargetFramework>net48</TargetFramework>
     <OutputType>Library</OutputType>
+    <LangVersion>latest</LangVersion> <!-- Ensures latest C# features -->
+    <PlatformTarget>x64</PlatformTarget> <!-- Or x86, depending on your dependencies -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo> <!-- If you manage AssemblyInfo.cs manually -->
   </PropertyGroup>
 
   <ItemGroup>

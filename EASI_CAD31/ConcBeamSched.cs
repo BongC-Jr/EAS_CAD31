@@ -31,7 +31,7 @@ using Newtonsoft.Json.Linq;
 
 namespace EASI_CAD31
 {
-    public class ConcBeamSchedule
+    public class ConcBeamSched
     {
         //https://docs.google.com/spreadsheets/d/1JnrIZvtSw9wcBCe9DjWcMk7eo1RCmf7uV5gQnpcumtE/edit#gid=0
         static string spreadSheetIDG = "1JnrIZvtSw9wcBCe9DjWcMk7eo1RCmf7uV5gQnpcumtE";
