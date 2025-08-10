@@ -19,7 +19,7 @@ using acColor = Autodesk.AutoCAD.Colors.Color;
 
 namespace EASI_CAD31
 {
-    public class ConcreteSlabDesign
+    public class ConcSlabDesign
     {
         static Document actDoc = Application.DocumentManager.MdiActiveDocument;
         static Database aCurDB = actDoc.Database;

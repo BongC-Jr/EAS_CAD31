@@ -234,22 +234,65 @@ namespace EASI_CAD31
  
           actDoc.Editor.WriteMessage("\nPlease wait... Thinking...");
  
-          Thread.Sleep(1000); 
+          Thread.Sleep(300); 
           // URL to send the POST request to
           string url = "http://127.0.0.1:7788/aibot/cai_d4h?v1=dfg84j567";
- 
-          // Data to send in the POST request
-          var data = new[]
+          
+          string currentPath = Application.DocumentManager.MdiActiveDocument.Database.Filename;
+          string currentDirectory = "";
+          if (!string.IsNullOrEmpty(currentPath))
           {
-              new { key = "user", value = "value1" },
-              new { key = "assistant", value = "value2" },
-              new { key = "user", value = $"{userMessage}" },
-              new { key = "assistant", value = "value3" }
+              currentDirectory = System.IO.Path.GetDirectoryName(currentPath);
+          }
+          DataGlobal.convofilepath = currentDirectory;
+          
+          var contentsList = new List<dynamic>
+          {
+              new { role = "user", parts = new[] { new { text = $"The current directory with filename of the drawing " +
+                                                                $"is {currentPath.ToString()}. If you are asked for the "+
+                                                                $"directory or path or folder, just give the directory without "+
+                                                                $"the filename. If you are asked for the filename, just give "+
+                                                                $"the filename. Ok?" } } },
+              new { role = "model", parts = new[] { new { text = "I confirm." } } },
+          }; 
+
+          IList<IList<object>> iioConvoData = DataGlobal.trainingConvCai2;
+          
+          foreach (var row in iioConvoData)
+         {
+            string role = row[0].ToString();
+            string text = row[1].ToString(); // Assuming the second column is the text content
+
+            contentsList.Add(new
+            {
+               role = role,
+               parts = new[] { new { text = text } }
+            });
+         }
+
+         var lastdata = new[]
+          {
+              new { key = (dynamic)"user", value = (dynamic)$"{userMessage}" },
+              //new { key = (dynamic)"assistant", value = (dynamic)"value2" },
+              //new { key = (dynamic)"user", value = (dynamic)$"{userMessage}" },
+              //new { key = (dynamic)"assistant", value = (dynamic)"value3" }
           };
- 
-          string jsonData = JsonConvert.SerializeObject(data);
+
+         // Data to send in the POST request
+
+          // Combine the two arrays
+          //
+         var data = ((IEnumerable<dynamic>)contentsList).SelectMany(x => ((IEnumerable<dynamic>)x.parts).Select(y => new { key = x.role, value = y.text })).ToArray();
+         
+          var combinedData = data.ToList();
+
+          combinedData.AddRange(lastdata);
+
+          string jsonData = JsonConvert.SerializeObject(combinedData);
+          //actDoc.Editor.WriteMessage($"\nJSON Data: {jsonData}");
+
           // Create a new instance of HttpClient
-          using HttpClient client = new HttpClient();
+         using HttpClient client = new HttpClient();
           // Set the content of the request
           HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
           try

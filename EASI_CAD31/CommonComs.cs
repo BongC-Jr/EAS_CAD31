@@ -155,6 +155,11 @@ namespace EASI_CAD31
             string rangeAddress = iioRangeAddress[0][0].ToString();
             DataGlobal.trainingConversation = gsv4.GetRange(rangeAddress, DataGlobal.aiConvoGSheetId);
 
+            //CAI_2
+            IList<IList<object>> iioRangeAddress2 = gsv4.GetRange("ProgramParameters!B3", DataGlobal.aiConvoGSheetId);
+            string rangeAddress2 = iioRangeAddress2[0][0].ToString();
+            DataGlobal.trainingConvCai2 = gsv4.GetRange(rangeAddress2, DataGlobal.aiConvoGSheetId);
+
             actDoc.Editor.WriteMessage("\nSEAS commands data initialized...");
         }
 
