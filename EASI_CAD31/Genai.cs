@@ -15,6 +15,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Threading;
+
 
 
 namespace EASI_CAD31
@@ -218,54 +220,66 @@ namespace EASI_CAD31
     {
        static Document actDoc = Application.DocumentManager.MdiActiveDocument;
        static Database aCurDB = actDoc.Database;
-       
-       [CommandMethod("CAI_2")]
-       public static void CAIUrl()
-       {
-          //GetUrlResponseAsync().GetAwaiter().GetResult();
-          GetUrlResponse();
+
+      [CommandMethod("CAI_2")]
+      public static async void CAI2()
+      {
+         //GetUrlResponseAsync().GetAwaiter().GetResult();
+         //GetUrlResponse();
+          PromptStringOptions psoUserMsg = new PromptStringOptions("\nQuestion: ");
+          psoUserMsg.AllowSpaces = true;
+          PromptResult prUserMsg = actDoc.Editor.GetString(psoUserMsg);
+          if (prUserMsg.Status != PromptStatus.OK) return;
+          string userMessage = prUserMsg.StringResult;
+ 
+          actDoc.Editor.WriteMessage("\nPlease wait... Thinking...");
+ 
+          Thread.Sleep(1000); 
+          // URL to send the POST request to
+          string url = "http://127.0.0.1:7788/aibot/cai_d4h?v1=dfg84j567";
+ 
+          // Data to send in the POST request
+          var data = new[]
+          {
+              new { key = "user", value = "value1" },
+              new { key = "assistant", value = "value2" },
+              new { key = "user", value = $"{userMessage}" },
+              new { key = "assistant", value = "value3" }
+          };
+ 
+          string jsonData = JsonConvert.SerializeObject(data);
+          // Create a new instance of HttpClient
+          using HttpClient client = new HttpClient();
+          // Set the content of the request
+          HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+          try
+          {
+              // Send the POST request
+              HttpResponseMessage response = await client.PostAsync(url, content);
+              // Check the status code of the response
+              if (response.IsSuccessStatusCode)
+              {
+                  // Get the response content
+                  string responseBody = response.Content.ReadAsStringAsync().Result;
+               string formattedResponse = responseBody.Replace("\\n", Environment.NewLine)
+                                                      .Replace("**", "")
+                                                      .Replace("\\\"","");
+                  actDoc.Editor.WriteMessage($"\n{formattedResponse}");
+
+                  //actDoc.Editor.WriteMessage($"\n{responseBody}");
+              }
+              else
+              {
+                  actDoc.Editor.WriteMessage("Failed to send request. Status code: " + response.StatusCode);
+              }
+          }
+          catch (HttpRequestException ex)
+          {
+              actDoc.Editor.WriteMessage("An error occurred: " + ex.Message);
+          }
+
        }
         
-       private static void GetUrlResponse()
-       {
-         // URL to send the POST request to
-         string url = "http://127.0.0.1:7788/aibot/cai_d4h?v1=dfg84j567";
-         // Data to send in the POST request
-         var data = new[]
-         {
-             new { key = "user", value = "value1" },
-             new { key = "assistant", value = "value2" },
-             new { key = "user", value = "value3" },
-             new { key = "assistant", value = "value4" }
-         };
-
-         string jsonData = JsonConvert.SerializeObject(data);
-         // Create a new instance of HttpClient
-         using HttpClient client = new HttpClient();
-         // Set the content of the request
-         HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-         try
-         {
-             // Send the POST request
-             HttpResponseMessage response = client.PostAsync(url, content).Result;
-             // Check the status code of the response
-             if (response.IsSuccessStatusCode)
-             {
-                 // Get the response content
-                 string responseBody = response.Content.ReadAsStringAsync().Result;
-                 actDoc.Editor.WriteMessage("Response: " + responseBody);
-             }
-             else
-             {
-                 actDoc.Editor.WriteMessage("Failed to send request. Status code: " + response.StatusCode);
-             }
-         }
-         catch (HttpRequestException ex)
-         {
-             actDoc.Editor.WriteMessage("An error occurred: " + ex.Message);
-         }
-
-       }
 
         [CommandMethod("CAI_")]
         public static async void AICommand()
