@@ -98,7 +98,12 @@ namespace EASI_CAD31
                 tr.Commit();
             }
             string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
-            string content = $"Assistant: Drawn a line from {startPt} to {endPt} with color index of {colorIndex}. The length of the line is {lineLength}\n";
+
+            string userContentTxt = $"user: {DataGlobal.UserMessage}";
+            // Create or append to the file
+            File.AppendAllText(filePath, userContentTxt + Environment.NewLine);
+
+            string content = $"model: Drawn a line from {startPt} to {endPt} with color index of {colorIndex}. The length of the line is {lineLength}";
             File.AppendAllText(filePath, content + Environment.NewLine);
             actDoc.Editor.WriteMessage($"\nLine drawn from {startPt} to {endPt}.");
         }
@@ -128,35 +133,51 @@ namespace EASI_CAD31
             tvFilterG5w[0] = new TypedValue((int)DxfCode.Start, "POINT");
             tvFilterG5w[1] = new TypedValue((int)DxfCode.Color, iPtColor);
 
-            PromptSelectionResult psrPtObj = actDoc.Editor.SelectAll(new SelectionFilter(tvFilterG5w));
-            if (psrPtObj.Status != PromptStatus.OK)
-            {
-                actDoc.Editor.WriteMessage("\nNo point objects found with the specified color.");
-                return;
-            }
+         string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
+         string contentTxt = "";
+         PromptSelectionResult psrPtObj = actDoc.Editor.SelectAll(new SelectionFilter(tvFilterG5w));
+         if (psrPtObj.Status != PromptStatus.OK)
+         {
+             actDoc.Editor.WriteMessage($"\nThere is no object point found with the specified color index {iPtColor}.");
+             filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
+             contentTxt = $"model: No point objects found with the specified color index {iPtColor}.";
+             // Create or append to the file
+             File.AppendAllText(filePath, contentTxt + Environment.NewLine);
+             return;
+         }
 
-            using(Transaction trPtObj = aCurDB.TransactionManager.StartTransaction())
+         using (Transaction trPtObj = aCurDB.TransactionManager.StartTransaction())
+         {
+            SelectionSet ssPtObj = psrPtObj.Value;
+            if (ssPtObj.Count == 0)
             {
-                SelectionSet ssPtObj = psrPtObj.Value;
-                if (ssPtObj.Count == 0)
-                {
-                    actDoc.Editor.WriteMessage("\nNo point objects found with the specified color.");
-                    return;
-                }
-                // Get the first selected point object
-                ObjectId ptObjId = ssPtObj[0].ObjectId;
-                DBPoint ptObj = (DBPoint)trPtObj.GetObject(ptObjId, OpenMode.ForRead);
-                // Store the point's position
-                _lastSelectedPoint = ptObj.Position;
-                string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
-                string content = $"Assistant: Object is Point, Color index is {iPtColor}, Point coordinate is {_lastSelectedPoint}, and Point Id is {ptObjId}\n";
-                // Create or append to the file
-                File.AppendAllText(filePath, content + Environment.NewLine);
-
-                // Optionally, you can display the point's position in the command line
-                actDoc.Editor.WriteMessage($"\nSelected point: {_lastSelectedPoint}");
-                trPtObj.Commit();
+               actDoc.Editor.WriteMessage($"\nNo point objects found with the specified color index {iPtColor}.");
+               filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
+               contentTxt = $"model: No point objects found with the specified color index {iPtColor}.";
+               // Create or append to the file
+               File.AppendAllText(filePath, contentTxt + Environment.NewLine);
+               return;
             }
+            // Get the first selected point object
+            ObjectId ptObjId = ssPtObj[0].ObjectId;
+            DBPoint ptObj = (DBPoint)trPtObj.GetObject(ptObjId, OpenMode.ForRead);
+            // Store the point's position
+            _lastSelectedPoint = ptObj.Position;
+
+            string userContentTxt = $"user: {DataGlobal.UserMessage}";
+            // Create or append to the file
+            File.AppendAllText(filePath, userContentTxt + Environment.NewLine);
+             
+            
+            contentTxt = $"model: Object is Point, Color index is {iPtColor}, Point coordinate is {_lastSelectedPoint}, and Point Id is {ptObjId}";
+            // Create or append to the file
+            File.AppendAllText(filePath, contentTxt + Environment.NewLine);
+
+            // Optionally, you can display the point's position in the command line
+            actDoc.Editor.WriteMessage($"\nAssistant: The coordinates of a point with "+
+                                       $"color index of {iPtColor} is { _lastSelectedPoint}\n");
+            trPtObj.Commit();
+         }
         }
     }
 }

@@ -179,12 +179,43 @@ namespace EASI_CAD31
         }
 
 
-        /**
-         * Author: Bernardo A. Cabebe Jr.
-         * Date: 11 Jan 2024 7:55pm
-         * Vanue: 3407 Cityland Pasong Tamo Tower
-         */
-            [CommandMethod("GPA_GetPolylineArea")]
+      [CommandMethod("DMO_DevMessageOn")]
+      public static void DevMessageOn()
+      {
+         PromptStringOptions psoDMO = new PromptStringOptions("");
+         psoDMO.Message = "\nEnter passcode: ";
+         psoDMO.AllowSpaces = false;
+         PromptResult prDMO = actDoc.Editor.GetString(psoDMO);
+         if (prDMO.Status != PromptStatus.OK) return;
+         string passcode = prDMO.StringResult;
+         if (passcode == "KiWi988_874123")
+         {
+            PromptIntegerOptions pioDMO = new PromptIntegerOptions("");
+            int devMsgOn = DataGlobal.isDevMessageOn ? 1 : 0;
+            pioDMO.DefaultValue = devMsgOn;
+            pioDMO.Message = "\nEnter value: ";
+            PromptIntegerResult pirDMO = actDoc.Editor.GetInteger(pioDMO);
+            if (pirDMO.Status != PromptStatus.OK) return;
+            int iDevMsgOn = pirDMO.Value;
+            DataGlobal.isDevMessageOn = iDevMsgOn == 1 ? true : false;
+            actDoc.Editor.WriteMessage($"\nDeveloper message is " + (DataGlobal.isDevMessageOn ? "ON" : "OFF"));
+            return;
+         }
+         else
+         {
+            DataGlobal.isDevMessageOn = false;
+            actDoc.Editor.WriteMessage("\nDeveloper message is OFF.");
+            return;
+         }
+      }
+
+      
+      /**
+       * Author: Bernardo A. Cabebe Jr.
+       * Date: 11 Jan 2024 7:55pm
+       * Vanue: 3407 Cityland Pasong Tamo Tower
+       */
+      [CommandMethod("GPA_GetPolylineArea")]
         public static void GetPolylineArea()
         {
             if (!ccData.isLicenseActive())

@@ -352,11 +352,16 @@ namespace EASI_CAD31
             string mixText = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_-";
             string shuffledText = ShuffleString(mixText);
             string first4chars = shuffledText.Substring(0, 4);
-            convo = $"assistant: Result of calculation {first4chars}, the beam infos are width={Math.Round(paramVariable[0],2)} mm, " + 
+
+            string userContentTxt = $"user: {DataGlobal.UserMessage}";
+            // Create or append to the file
+            LogConversation(userContentTxt);
+
+            convo = $"model: Result of calculation {first4chars}, the beam infos are width={Math.Round(paramVariable[0],2)} mm, " + 
                     $"depth={Math.Round(paramVariable[1],2)} mm, " +
                     $"tension bars={Math.Round(paramVariable[2],2)} pcs, compression bars={Math.Round(paramVariable[3],2)} pcs, " +
                     $"bar diameter={paramVariable[4]} mm, phiMn={Math.Round(paramVariable[5],4)} Nmm, f'c={cFc}, fy={rfy}, " +
-                    $"stirrup dia.={barDv}, beta1={Math.Round(b1,3)}, {cby}, {ductile}\n";
+                    $"stirrup dia.={barDv}, beta1={Math.Round(b1,3)}, {cby}, {ductile}";
 
             LogConversation(convo);
             actDoc.Editor.WriteMessage($"\n{convo}\n");
@@ -465,7 +470,7 @@ namespace EASI_CAD31
         }
 
 
-        public static void LogConversation(string conversationContent)
+        private static void LogConversation(string conversationContent)
         {
             string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
             string content = conversationContent;

@@ -29,8 +29,12 @@ namespace EASI_CAD31
 
       public static string aiConvoGSheetId { get; set; }
       public static IList<IList<object>> trainingConversation { get; set; }
-        
+
       public static IList<IList<object>> trainingConvCai2 { get; set; }
+
+      public static bool isDevMessageOn { get; set; } = false;
+
+      public static string UserMessage { get; set; }
 
     }
 }
