@@ -470,19 +470,23 @@ namespace EASI_CAD31
         }
 
 
-        private static void LogConversation(string conversationContent)
-        {
-            string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
-            string content = conversationContent;
-            File.AppendAllText(filePath, content + Environment.NewLine);
-        }
+       private static void LogConversation(string conversationContent)
+       {
+          string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
+          string content = conversationContent;
+          // Create or append to the file
+          using (StreamWriter writer = File.AppendText(filePath))
+          {
+             writer.WriteLine(content);
+          }
+       }
 
-        public static void WriteLog(string logText)
-        {
-            string filePath = Path.Combine(DataGlobal.convofilepath, "logsH6p.txt");
-            string content = logText;
-            File.AppendAllText(filePath, content);
-        }
+       public static void WriteLog(string logText)
+       {
+          string filePath = Path.Combine(DataGlobal.convofilepath, "logsH6p.txt");
+          string content = logText;
+          File.AppendAllText(filePath, content);
+       }
 
     }
 }

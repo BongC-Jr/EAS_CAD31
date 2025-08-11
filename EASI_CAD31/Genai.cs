@@ -362,7 +362,11 @@ namespace EASI_CAD31
           
          string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
          DataGlobal.UserMessage = userMessage;
-
+         
+         if (DataGlobal.isDevMessageOn)
+         {
+            actDoc.Editor.WriteMessage($"\nUser message: {DataGlobal.UserMessage}");
+         } 
          // Data to send in the POST request
 
          // Combine the two arrays
@@ -400,7 +404,7 @@ namespace EASI_CAD31
                                                    .Trim('"')
                                                    .TrimStart('"')
                                                    .TrimEnd('"');
-               
+
                if (DataGlobal.isDevMessageOn)
                {
                   actDoc.Editor.WriteMessage($"\nFormatted response: {formattedResponse}");
@@ -442,13 +446,22 @@ namespace EASI_CAD31
                   // Create or append to the file
                   //File.AppendAllText(filePath, content + Environment.NewLine);
 
-                  actDoc.Editor.WriteMessage($"\nAssistant: {formattedResponse}");
-                  actDoc.Editor.WriteMessage("\n");
+                  string userContentTxt = $"user: {DataGlobal.UserMessage}";
+                  // Create or append to the file
+                  using (StreamWriter writer = File.AppendText(filePath))
+                  {
+                      writer.WriteLine(userContentTxt);
+                  }
 
                   string contentTxt = $"model: {formattedResponse}";
                   // Create or append to the file
-                  File.AppendAllText(filePath, contentTxt + Environment.NewLine);
+                  using (StreamWriter writer = File.AppendText(filePath))
+                  {
+                      writer.WriteLine(contentTxt);
+                  }
                   //actDoc.Editor.WriteMessage($"\n{response.ToString()}");
+                  actDoc.Editor.WriteMessage($"\nAssistant: {formattedResponse}");
+                  actDoc.Editor.WriteMessage("\n");
                }
                   //actDoc.Editor.WriteMessage($"\n{responseBody}");
 
