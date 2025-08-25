@@ -54,6 +54,10 @@
               "target": "Package",
               "version": "[1.70.0.3819, )"
             },
+            "IronPython": {
+              "target": "Package",
+              "version": "[3.4.2, )"
+            },
             "Microsoft.NETFramework.ReferenceAssemblies": {
               "suppressParent": "All",
               "target": "Package",
