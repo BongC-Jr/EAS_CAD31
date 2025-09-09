@@ -1,5 +1,9 @@
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.Runtime;
+using IronPython.Runtime.Operations;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -20,16 +24,6 @@ namespace EASI_CAD31
 
       static CCData ccData = new CCData();
       static bool is_log = true;
-
-      /**
-       * Date added: 21 Jul 2025
-       * Added by: Engr Bernardo Cabebe Jr.
-       * Venue: 31H OOC, Bagumbayan, Quezon City
-       */
-      public static void DrawBWSection()
-      {
-         actDoc.Editor.WriteMessage($"\nDraw Builtup Section");
-      }
 
       public static void AI_ConcBeamCapacity(List<object> loParam)
       {
@@ -411,7 +405,7 @@ namespace EASI_CAD31
 
             if (methodInfo == null)
             {
-               throw new Exception($"Method {methodName} not found.");
+               throw new System.Exception($"Method {methodName} not found.");
             }
 
             // Parse parameters
@@ -432,7 +426,7 @@ namespace EASI_CAD31
          {
             actDoc.Editor.WriteMessage($"Argument exception: {ex.Message}");
          }
-         catch (Exception ex)
+         catch (Autodesk.AutoCAD.Runtime.Exception ex)
          {
             actDoc.Editor.WriteMessage($"An error occurred: {ex.Message}");
          }
@@ -473,9 +467,9 @@ namespace EASI_CAD31
 
             return parameters;
          }
-         catch (Exception ex)
+         catch (System.Exception ex)
          {
-            throw new Exception($"An error occurred while parsing parameters: {ex.Message}");
+            throw new System.Exception($"An error occurred while parsing parameters: {ex.Message}");
          }
       }
 

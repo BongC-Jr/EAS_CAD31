@@ -491,7 +491,23 @@ namespace EASI_CAD31
                      }
                      actDoc.Editor.WriteMessage($"\nAssistant: {jsonResult}\n");
                      break;
+                  case ">A":
+                     strcommand = formattedResponse.ToString().Remove(0, 2);
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        actDoc.Editor.WriteMessage($"\nString command: {strcommand}");
+                        actDoc.Editor.WriteMessage($"\n-------------------\n");
+                     }
 
+                     List<string> listParamy2q = strcommand.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(s => s.Trim())
+                                                  .ToList();
+
+                     string methodInItemy2q = listParamy2q.LastOrDefault();
+                     listParamy2q.Remove(methodInItemy2q);
+
+                     ExecuteCommandString(listParamy2q);
+                     break;
                   default:
                      //content = $"assistant: {formattedResponse}";
                      // Create or append to the file

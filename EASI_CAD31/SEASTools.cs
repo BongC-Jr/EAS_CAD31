@@ -71,13 +71,18 @@ namespace EASI_CAD31
          return null;
       }
 
-      public int?  LogConversation(string conversationContent)
+      public int? LogConversation(string conversationContent)
       {
          string filePath = Path.Combine(DataGlobal.convofilepath, "conversation.txt");
          if (Directory.Exists(DataGlobal.convofilepath))
          {
             string content = conversationContent;
-            File.AppendAllText(filePath, content + Environment.NewLine);
+            //File.AppendAllText(filePath, content + Environment.NewLine);
+            // Create or append to the file
+            using (StreamWriter writer = File.AppendText(filePath))
+            {
+               writer.WriteLine(content);
+            }
             return 1; // Success
          }
          else
@@ -85,6 +90,24 @@ namespace EASI_CAD31
             return -1; // Directory does not exist
          }
       }
+
+
+
+      public string ShuffleString(string input)
+      {
+         var chars = input.ToCharArray();
+         var random = new Random();
+         for (int i = chars.Length - 1; i > 0; i--)
+         {
+            int j = random.Next(i + 1);
+            var temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
+         }
+         return new string(chars);
+      }
+      
+
         
     }
 }
