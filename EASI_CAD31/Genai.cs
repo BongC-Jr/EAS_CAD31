@@ -238,7 +238,7 @@ namespace EASI_CAD31
          if (prUserMsg.Status != PromptStatus.OK) return;
          string userMessage = prUserMsg.StringResult;
 
-         actDoc.Editor.WriteMessage("\nPlease wait... Thinking...");
+         actDoc.Editor.WriteMessage("\nHold on a moment...");
 
          Thread.Sleep(300);
          // URL to send the POST request to
@@ -456,8 +456,8 @@ namespace EASI_CAD31
                   case "!!":
                      strcommand = formattedResponse.ToString().Remove(0, 2);
                      //var pythonScript = "#PythonScript\nx = 5 \ny = 3 \nresult = x + y";
-
-                     string pythonScript = genaiMethods.ColumnBalanceCapacity(strcommand);
+                     string strpyformat = strcommand.Replace("-", "\n");
+                     string pythonScript = genaiMethods.ColumnBalanceCapacity(strpyformat);
 
                      string[] pySlines = pythonScript.Split('\n');
                      string calcsStr = string.Join("\n", pySlines.Take(pySlines.Length - 2));
@@ -507,6 +507,28 @@ namespace EASI_CAD31
                      listParamy2q.Remove(methodInItemy2q);
 
                      ExecuteCommandString(listParamy2q);
+                     break;
+                  case ">B":
+                     strcommand = formattedResponse.ToString().Remove(0, 2);
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        actDoc.Editor.WriteMessage($"\nString command: {strcommand}");
+                        actDoc.Editor.WriteMessage($"\n-------------------\n");
+                     }
+
+                     List<string> listParamp3q = strcommand.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(s => s.Trim())
+                                                  .ToList();
+
+                     string methodInItemp3q = listParamp3q.LastOrDefault();
+                     listParamp3q.Remove(methodInItemp3q);
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        string fpar = string.Join(", ", listParamp3q);
+                        actDoc.Editor.WriteMessage($"\nFinal params: {fpar}");
+                        actDoc.Editor.WriteMessage($"\n-------------------\n");
+                     }
+                     ExecuteCommandString(listParamp3q);
                      break;
                   default:
                      //content = $"assistant: {formattedResponse}";

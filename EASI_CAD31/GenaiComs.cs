@@ -25,6 +25,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using acColor = Autodesk.AutoCAD.Colors.Color;
+//using System.Globalization;
 
 
 namespace EASI_CAD31
@@ -46,14 +47,224 @@ namespace EASI_CAD31
 
 
       /**
+      * Date added: 10 Sep 2025
+      * Added by: Engr Bernardo Cabebe Jr.
+      * Venue: 1508 CPTT, Chino Roces Ave, Makati City
+      */
+      [CommandMethod("AI_ColumnEstimate")]
+      public static void ColumnEstimate()
+      {
+         Document iAcDoc = Application.DocumentManager.MdiActiveDocument; //Active document
+         Database iCurDB = iAcDoc.Database;
+
+         string userContentTxt = "";
+         string convo = "";
+         SEASTools sTools = new SEASTools();
+         try
+         {
+            //Example of estimate params. The unit will be based on the given dimension of column
+            //identified by its id.
+            //_+DUOLDX,3280,28,12.7,10,0.00000785,mm,kg
+            PromptStringOptions psoCEst = new PromptStringOptions("\nEstimate params: ");
+            psoCEst.AllowSpaces = false;
+            PromptResult prCEst = iAcDoc.Editor.GetString(psoCEst);
+            if (prCEst.Status != PromptStatus.OK)
+            {
+               //iAcDoc.Editor.WriteMessage("\nCommand cancelled.");
+               return;
+            }
+            string cEstParam = prCEst.StringResult;
+            
+            if (DataGlobal.isDevMessageOn)
+            {
+               iAcDoc.Editor.WriteMessage($"\nParams: {cEstParam}");
+            }
+
+            string[] arrStrParam = cEstParam.Split(',');
+            int nParam = arrStrParam.Length;
+            if (nParam < 8)
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               sTools.LogConversation(userContentTxt);
+
+               convo = $"Insufficient parameters, {nParam}. I cannot perform the task.";
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+               return;
+            }
+
+            /**
+            * Index: 0        1    2  3    4  5          6  7
+            *        _+DUOLDX,3280,28,12.7,10,0.00000785,mm,kg
+            */
+            //Select all objects in the layer
+            string layerName = arrStrParam[0].Trim();
+            double colLength = Convert.ToDouble(arrStrParam[1]);
+            double nTies = Convert.ToDouble(arrStrParam[2]);
+            double mainTieD = Convert.ToDouble(arrStrParam[3]);
+            double crossTieD = Convert.ToDouble(arrStrParam[4]);
+            double steelUW = Convert.ToDouble(arrStrParam[5]);
+            string lenUnit = arrStrParam[6];
+            string wtUnit = arrStrParam[7];
+            
+            bool layerExists = false;
+            using (Transaction trLayer = iCurDB.TransactionManager.StartTransaction())
+            {
+               LayerTable lyrTbl = trLayer.GetObject(iCurDB.LayerTableId, OpenMode.ForRead) as LayerTable;
+               foreach (ObjectId objId in lyrTbl)
+               {
+                  LayerTableRecord lyrtblrec;
+                  lyrtblrec = trLayer.GetObject(objId, OpenMode.ForRead) as LayerTableRecord;
+                   
+                  if(lyrtblrec.Name == layerName)
+                  {
+                     layerExists = true;
+                     break;
+                  }
+               }
+            }
+             
+            if (!layerExists)
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               sTools.LogConversation(userContentTxt);
+
+               convo = $"Column {layerName} does not exist. I cannot perform the task.";
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+               return;
+            }
+
+            TypedValue[] tvColEst = new TypedValue[1];
+            tvColEst.SetValue(new TypedValue((int)DxfCode.LayerName, layerName), 0);
+            SelectionFilter sfColEst = new SelectionFilter(tvColEst);
+            PromptSelectionResult psrColEst = iAcDoc.Editor.SelectAll(sfColEst);//GetSelection(sfColEst);
+            if (psrColEst.Status != PromptStatus.OK) {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               sTools.LogConversation(userContentTxt);
+               
+               convo = $"Task column estimate cancelled.";
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+               return;
+            }
+         
+            SelectionSet ssColEst = psrColEst.Value;
+
+            double cVolume = 0.0;
+            double wtMt = 0.0;
+            double wtCt = 0.0;
+            double wtVb = 0.0;
+            using (Transaction trColEst = iCurDB.TransactionManager.StartTransaction())
+            {
+               //Put beam marks in a list and sort it.
+               foreach (SelectedObject soColEst in ssColEst)
+               {
+                  if (soColEst != null)
+                  {
+                     Entity enColEst = trColEst.GetObject(soColEst.ObjectId, OpenMode.ForRead) as Entity;
+                     if (enColEst is Polyline)
+                     {
+                        Polyline plnColEst = enColEst as Polyline;
+                        int intColor = plnColEst.ColorIndex;
+                        switch (intColor)
+                        {
+                           case 1:
+                              double cArea = plnColEst.Area;
+                              cVolume = cArea * colLength;
+                              break;
+                           case 4:
+                              //MT = main tie
+                              double areaMT = 0.25 * Math.PI * mainTieD * mainTieD;
+                              double lengthMT = plnColEst.Length;
+                              double volMT = areaMT * lengthMT;
+                              wtMt = nTies * volMT * steelUW;
+                              break;
+                           case 5:
+                              //CT = cross tie
+                              double areaCT = 0.25 * Math.PI * crossTieD * crossTieD;
+                              double lengthCT = plnColEst.Length;
+                              double volCT = areaCT * lengthCT;
+                              wtCt += nTies * volCT * steelUW;
+                              break;
+                           default:
+                              break;
+                        }
+                     }
+                     if(enColEst is Circle)
+                     {
+                        Circle cirColEst = enColEst as Circle;
+                        double diaVb = cirColEst.Diameter;
+                        double areaVb = 0.25 * Math.PI * diaVb * diaVb;
+                        double volVb = areaVb * colLength;
+                        wtVb += volVb * steelUW;
+                     }
+                  }
+               }
+               trColEst.Commit();
+            }
+
+            try
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               // Create or append to the file
+               sTools.LogConversation(userContentTxt);
+
+               double totalWt = wtVb + wtMt + wtCt;
+               //string strWtMT = wtMt.ToString("N",new CultureInfo("en-US"));
+               convo = $"Column {layerName} has the following details: " +
+                       $"length is {colLength.ToString()} " + lenUnit + ", " +
+                       $"number of ties in vertical directions is {nTies.ToString()}, " +
+                       $"main tie diameter is {mainTieD.ToString()}" + lenUnit + ", " +
+                       $"cross tie diameter is {crossTieD.ToString()}, " + lenUnit + ", " +
+                       $"AutoCAD objects of {ssColEst.Count.ToString()}," +
+                       $"and the unit used is {lenUnit}-{wtUnit}. " +
+                       $"The volume of concrete is {cVolume} {lenUnit}3, " +
+                       $"the weight of vertical bars is {wtVb} {wtUnit}, " +
+                       $"the weight of main tie is {wtMt} {wtUnit}, " +
+                       $"the weight of cross ties is {wtCt} {wtUnit}, " +
+                       $"and the total weight of steel is {totalWt} {wtUnit}";
+                       //" ";
+               //"Assistant: "
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage("\nAssistant: " + convo + "\n");
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception exc)
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               // Create or append to the file
+               sTools.LogConversation(userContentTxt);
+
+               convo = $"Column Estimate system error: {exc.Message}";
+
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+            }
+            
+         }
+            catch (System.Exception ex)
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               sTools.LogConversation(userContentTxt);
+
+               convo = $"Error in Column Estimate: {ex.Message}";
+               sTools.LogConversation("model: " + convo);
+               iAcDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+            }
+      }
+
+      
+      
+      /**
       * Date added: 21 Jul 2025
       * Added by: Engr Bernardo Cabebe Jr.
       * Venue: 31H OOC, Bagumbayan, Quezon City
       */
-      //[CommandMethod("AI_DrawLineM01")]
       [CommandMethod("AI_DrawColumnSection")]
       public static void DrawColumnSection()
       {
+         //Example Column params:
+         //16,24,4,6,0.75,0.5,1.57,in
          PromptStringOptions psoDCS = new PromptStringOptions("\nColumn params: ");
          psoDCS.AllowSpaces = false;
          PromptResult prDCS = actDoc.Editor.GetString(psoDCS);
@@ -73,9 +284,23 @@ namespace EASI_CAD31
 
          string[] arrStrParam = colParam.Split(',');
          double[] arrDblParam = new double[arrStrParam.Length];
+         string unitUsed = "";
          for (int i = 0; i < arrStrParam.Length; i++)
          {
-            arrDblParam[i] = Convert.ToDouble(arrStrParam[i]);
+            if(i == 7){
+               //0  1  2 3 4    5   6    7  <-- index number
+               //16,24,4,6,0.75,0.5,1.57,in <-- Column params
+               //                         .
+               //                        / \
+               //                         |
+               //                         |
+               //                         + index 7    
+               unitUsed = arrStrParam[i];
+            }
+            else
+            {
+              arrDblParam[i] = Convert.ToDouble(arrStrParam[i]);
+            }
          }
          if (DataGlobal.isDevMessageOn)
          {
@@ -86,9 +311,9 @@ namespace EASI_CAD31
          }
          
          SEASTools sTools = new SEASTools();
-         string mixText = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_-";
+         string mixText = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
          string shuffledText = sTools.ShuffleString(mixText);
-         string layerName = shuffledText.Substring(0, 6);
+         string layerName = "_+" + shuffledText.Substring(0, 6);
          sTools.CreateLayer(layerName, 3, true);
 
          Editor curEd = actDoc.Editor;
@@ -159,11 +384,13 @@ namespace EASI_CAD31
             text.SetDatabaseDefaults();
             text.TextString = layerName;
             text.Layer = aiTextLayer;
+            //text.Layer = layerName;
             text.Position = new Point3d(txtPti2q.X, txtPti2q.Y, 0);
             text.Height = verBarDia * 2;
             text.HorizontalMode = TextHorizontalMode.TextCenter;
             text.VerticalMode = TextVerticalMode.TextTop;
             text.AlignmentPoint = text.Position;
+            text.Color = acColor.FromColorIndex(ColorMethod.ByAci, 251); 
 
             // Add the text to the current space
             btr.AppendEntity(text);
@@ -203,7 +430,7 @@ namespace EASI_CAD31
 
          //Draw main tie
          GenaiComs genaico = new GenaiComs();
-         genaico.DrawCloseTie(cirCPt1, cirCPt3, verBarDia, tieBarDia, 4);
+         genaico.DrawCloseTie(cirCPt1, cirCPt3, verBarDia, tieBarDia, layerName, 4);
 
          // Draw cross ties
          double Nb = arrDblParam[2]; // number of vertical bars
@@ -226,11 +453,12 @@ namespace EASI_CAD31
             // Create a new MText entity
             MText mText = new MText();
             mText.SetDatabaseDefaults();
-            mText.Contents = $"DIMENSION  : {cW}X{cH}\n"+
+            mText.Contents = $"DIMENSION  : {cW}X{cH}{unitUsed}\n"+
                              $"VERT. BARS : {Nt} - {verBarDia}%%C\n" +
-                             $"COL. TIES  : {tieBarDia}%%C - N1 @ S1, N2 @ S2 O.C.\n" +
+                             $"COL. TIES  : {tieBarDia}%%C - N1 @ S1, REST @ S2 O.C. TO C.L.\n" +
                              $"JOINT CONF.: {concCover}%%C - N3 @ S3 O.C.";
-            mText.Layer = aiTextLayer;
+            //mText.Layer = aiTextLayer;
+            mText.Layer = layerName;
             mText.Location = new Point3d(txtPtk2q.X, txtPtk2q.Y, 0);
             mText.TextHeight = verBarDia * 3;
             mText.Attachment = AttachmentPoint.TopLeft;
@@ -323,13 +551,13 @@ namespace EASI_CAD31
             {
                Point3d ccPt1 = arrPairBT[cc][0];
                Point3d ccPt2 = arrPairBB[cc][1];
-               genaico.DrawCloseTie(ccPt1, ccPt2, verBarDia, tieBarDia, 5);
+               genaico.DrawCloseTie(ccPt1, ccPt2, verBarDia, tieBarDia, layerName, 5);
             }
             else
             {
                Point3d ccPt1 = arrPairBT[cc][0];
                Point3d ccPt2 = arrPairBB[cc][0];
-               genaico.DrawOpenTieH(ccPt1, ccPt2, verBarDia, tieBarDia, 5);
+               genaico.DrawOpenTieH(ccPt1, ccPt2, verBarDia, tieBarDia, layerName, 5);
             }
          }
 
@@ -342,13 +570,13 @@ namespace EASI_CAD31
             {
                Point3d ddPt1 = arrPairHL[dd][0];
                Point3d ddPt2 = arrPairHR[dd][1];
-               genaico.DrawCloseTie(ddPt1, ddPt2, verBarDia, tieBarDia, 5);
+               genaico.DrawCloseTie(ddPt1, ddPt2, verBarDia, tieBarDia, layerName, 5);
             }
             else
             {
                Point3d ddPt1 = arrPairHL[dd][0];
                Point3d ddPt2 = arrPairHR[dd][0];
-               genaico.DrawOpenTieB(ddPt1, ddPt2, verBarDia, tieBarDia, 5);
+               genaico.DrawOpenTieB(ddPt1, ddPt2, verBarDia, tieBarDia, layerName, 5);
             }
          }
 
@@ -359,8 +587,8 @@ namespace EASI_CAD31
          // Create or append to the file
          sTools.LogConversation(userContentTxt);
          
-         convo = $"The column {layerName} with width of {cW}, depth of {cH}, Nb of {arrDblParam[2]}, an Nh of {arrDblParam[3]}, and total number of rebar {Nt} " +
-                 $"is drawn at the center of the current view. The vertical bar diameter is {verBarDia}, tie bar diameter is {tieBarDia}, and concrete cover is {concCover}.";
+         convo = $"The column {layerName} with width of {cW} {unitUsed}, depth of {cH} {unitUsed}, Nb of {arrDblParam[2]}, an Nh of {arrDblParam[3]}, and total number of rebar {Nt} " +
+                 $"is drawn at the center of the current view. The vertical bar diameter is {verBarDia} {unitUsed}, tie bar diameter is {tieBarDia} {unitUsed}, and concrete cover is {concCover} {unitUsed}.";
          
          sTools.LogConversation("model: " + convo);
          actDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
@@ -429,7 +657,7 @@ namespace EASI_CAD31
 
          return arrPair.ToArray();
       }
-      private void DrawCloseTie(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, short colorIndex = 5)
+      private void DrawCloseTie(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, string layerName, short colorIndex = 5)
       {
          using (Transaction trCloseTie = aCurDB.TransactionManager.StartTransaction())
             {
@@ -487,6 +715,7 @@ namespace EASI_CAD31
                     plSeg1.AddVertexAt(11, new Point2d(plpt12.X, plpt12.Y), 0, 0, 0);
 
                     plSeg1.Color = acColor.FromColorIndex(ColorMethod.ByAci, colorIndex);
+                    plSeg1.Layer = layerName;
 
                     bltrec.AppendEntity(plSeg1);
                     trCloseTie.AddNewlyCreatedDBObject(plSeg1, true);
@@ -495,7 +724,7 @@ namespace EASI_CAD31
                 trCloseTie.Commit();
             }
       }
-      private void DrawOpenTieH(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, short colorIndex = 5)
+      private void DrawOpenTieH(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, string layerName, short colorIndex = 5)
       {
          using (Transaction trCloseTie = aCurDB.TransactionManager.StartTransaction())
          {
@@ -558,6 +787,7 @@ namespace EASI_CAD31
                //plSeg1.AddVertexAt(11, new Point2d(plpt12.X, plpt12.Y), 0, 0, 0);
 
                plSeg1.Color = acColor.FromColorIndex(ColorMethod.ByAci, colorIndex);
+               plSeg1.Layer = layerName;
 
                bltrec.AppendEntity(plSeg1);
                trCloseTie.AddNewlyCreatedDBObject(plSeg1, true);
@@ -565,7 +795,7 @@ namespace EASI_CAD31
             trCloseTie.Commit();
          }
       }
-      private void DrawOpenTieB(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, short colorIndex = 5)
+      private void DrawOpenTieB(Point3d cirCPt1, Point3d cirCPt2, double verBarDia, double tieBarDia, string layerName, short colorIndex = 5)
       {
          using (Transaction trCloseTie = aCurDB.TransactionManager.StartTransaction())
          {
@@ -629,6 +859,7 @@ namespace EASI_CAD31
                plSeg1.AddVertexAt(5, new Point2d(plpt12.X, plpt12.Y), 0, 0, 0);
 
                plSeg1.Color = acColor.FromColorIndex(ColorMethod.ByAci, colorIndex);
+               plSeg1.Layer = layerName;
 
                bltrec.AppendEntity(plSeg1);
                trCloseTie.AddNewlyCreatedDBObject(plSeg1, true);

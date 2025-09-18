@@ -1,0 +1,33 @@
+PI=3.141593
+Es=200000
+ecu=0.003
+cc=40
+beta1=min(max(0.85 - 0.05 * ((fc - 27.58) / 6.9), 0.65), 0.85)
+#Calculate Pbc
+Ash=Nh*0.25*PI*Db*Db
+db=B-cc-Dv-0.5*Db
+dp=cc+Dv+0.5*Db
+dcb=0.5*B-dp
+xbb=ecu*db/((fy/Es)+ecu)
+ab=beta1*xbb
+Ag=B*H
+Nt=2*Nb+2*Nh-4
+Ccb=0.85*fc*beta1*xbb*H
+Csb=Ash*(fy-0.85*fc)
+Tb=Ash*fy
+Pbb=Ccb+Csb-Tb
+ebb=(Ccb*(db-ab/2-dcb)+Csb*(db-dp-dcb)+Tb*dcb)/Pbb
+Mbb=Pbb*ebb
+#Calculate Pbh
+Asb=Nb*0.25*PI*Db*Db
+dh=H-cc-Dv-0.5*Db
+dch=0.5*H-dp
+xbh=ecu*dh/((fy/Es)+ecu)
+ah=beta1*xbh
+Cch=0.85*fc*beta1*xbh*B
+Csh=Asb*(fy-0.85*fc)
+Th=Asb*fy
+Pbh=Cch+Csh-Th
+ebh=(Cch*(dh-ah/2-dch)+Csh*(dh-dp-dch)+Th*dch)/Pbh
+Mbh=Pbh*ebh
+result = f'Pbb={Pbb/1000:.2f}kN, Mbb={Mbb/1000000:.2f}kN-m, ebb={ebb:.3f}mm; Pbh={Pbh/1000:.2f}kN, Mbh={Mbh/1000000:.2f}kN-m, ebh={ebh:.3f}mm'

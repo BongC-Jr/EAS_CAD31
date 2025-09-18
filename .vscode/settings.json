@@ -1,3 +1,10 @@
 {
-   "dotnet.defaultSolution": "EASI_CAD31.sln"
+   "dotnet.defaultSolution": "EASI_CAD31.sln",
+   "python-envs.pythonProjects": [
+      {
+         "path": "",
+         "envManager": "ms-python.python:system",
+         "packageManager": "ms-python.python:pip"
+      }
+   ]
 }

@@ -52,3 +52,18 @@ If you prefer to keep using packages.config, you can continue to use it. However
 In either case, ensure that your .csproj file is correctly configured to reference the packages.config file or the PackageReference elements.
 
 Since your project is working fine, it's likely that the NuGet packages are already correctly configured. However, migrating to the PackageReference format can provide more flexibility and better support for modern .NET development.
+
+
+
+
+If you want to use a terminal command to add a new class to an existing project, you can use a template like this:
+
+1. Navigate to your project directory in the terminal.
+2. Run the following command to create a new class file:
+
+
+bash
+dotnet new class -n MyClass -o Models
+
+
+This will create a new class file named MyClass.cs in the Models directory. Adjust the -n and -o options according to your needs.
