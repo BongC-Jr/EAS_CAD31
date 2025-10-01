@@ -530,6 +530,48 @@ namespace EASI_CAD31
                      }
                      ExecuteCommandString(listParamp3q);
                      break;
+                  case ">C":
+                     strcommand = formattedResponse.ToString().Remove(0, 2);
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        actDoc.Editor.WriteMessage($"\nString command: {strcommand}");
+                        actDoc.Editor.WriteMessage($"\n-------------------\n");
+                     }
+
+                     string pyScriptp3n = genaiMethods.NominalColumnCapacityPyScript(strcommand);
+
+                     string[] pySlinesp3n = pyScriptp3n.Split('\n');
+                     string calcsStrp3n = string.Join("\n", pySlinesp3n.Take(pySlinesp3n.Length - 2));
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        actDoc.Editor.WriteMessage($"\nCalculation: \n{calcsStrp3n}");
+                        actDoc.Editor.WriteMessage($"\n-------------------");
+                     }
+
+                     if (DataGlobal.isDevMessageOn)
+                     {
+                        actDoc.Editor.WriteMessage($"\nPython script:\n {pyScriptp3n}");
+                     }
+
+                     dynamic dynResultp3n = ExecutePythonScript(pyScriptp3n, actDoc);
+                     var jsonResultp3n = JsonConvert.SerializeObject(dynResultp3n);
+
+                     userContentTxt = $"user: {DataGlobal.UserMessage}";
+                     // Create or append to the file
+                     using (StreamWriter writer = File.AppendText(filePath))
+                     {
+                        writer.WriteLine(userContentTxt);
+                     }
+
+                     contentTxt = $"model: The {jsonResultp3n}\n" +
+                                  $"Take note that the capacity is given in the direction of dimensions B and H in the form of Axial and Flexural capacity pairs.";
+                     // Create or append to the file
+                     using (StreamWriter writer = File.AppendText(filePath))
+                     {
+                        writer.WriteLine(contentTxt);
+                     }
+                     actDoc.Editor.WriteMessage($"\nAssistant: The capacity of column are: \n{jsonResultp3n}\nTake note that the capacity is given in the direction of dimensions B and H in the form of Axial and Flexural capacity pairs.\n");
+                     break;
                   default:
                      //content = $"assistant: {formattedResponse}";
                      // Create or append to the file

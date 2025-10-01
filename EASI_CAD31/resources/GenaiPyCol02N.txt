@@ -1,0 +1,2 @@
+kwargs = process_kwargs(strParam)
+result = columnCapacityMnT(kwargs)

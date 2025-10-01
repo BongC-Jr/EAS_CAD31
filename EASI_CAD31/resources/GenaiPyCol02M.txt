@@ -1,0 +1,172 @@
+
+def process_kwargs(strParam: str):
+    kwargs = {}
+    pairs = strParam.split(',')
+    for pair in pairs:
+        key_value = pair.split('=')
+        if len(key_value) == 2:
+            key = key_value[0].strip()
+            value = key_value[1].strip()
+            try:
+                value = float(value)
+            except ValueError:
+                pass
+            kwargs[key] = value
+    return kwargs
+
+def newton_raphson_cubic(a, b, c, d, x0, tol=1e-6, max_iter=100):
+    x = x0
+    for _ in range(max_iter):
+        f_x = a * x**3 + b * x**2 + c * x + d
+        f_prime_x = 3 * a * x**2 + 2 * b * x + c
+        if f_prime_x == 0:
+            return None  # Avoid division by zero
+        x_next = x - f_x / f_prime_x
+        if abs(x_next - x) < tol:
+            return x_next
+        x = x_next
+    return None
+
+def shuffle_string(s, length):
+    # Convert string to list of characters
+    char_list = list(s)
+
+    # Fisher-Yates shuffle algorithm
+    for i in range(len(char_list) - 1, 0, -1):
+        # Generate a random index j such that 0 <= j <= i
+        j = (hash(str(i)) % (i + 1))
+
+        # Swap char_list[i] and char_list[j]
+        char_list[i], char_list[j] = char_list[j], char_list[i]
+
+    # Join the shuffled list back into a string and slice to desired length
+    shuffled_string = ''.join(char_list)[:length]
+
+    return shuffled_string
+
+def columnCapacityMnT(kwargs: dict):
+    B = kwargs.get('B')
+    H = kwargs.get('H')
+    Nb = kwargs.get('Nb')
+    Nh = kwargs.get('Nh')
+    Db = kwargs.get('Db')
+    Dv = kwargs.get('Dv')
+    fc = kwargs.get('fc')
+    fy = kwargs.get('fy')
+    Id = kwargs.get('ID')
+
+    if Id == 'None':
+      strTextb0t = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      shuftxt = shuffle_string(strTextb0t,8)
+      Id = "_+" + shuftxt
+
+    PI=3.141593
+    Es=200000
+    ecu=0.003
+    cc=40
+    beta1=min(max(0.85 - 0.05 * ((fc - 27.58) / 6.9), 0.65), 0.85)
+    #Calculate Pbb
+    Ash=Nh*0.25*PI*Db*Db
+    db=B-cc-Dv-0.5*Db
+    dp=cc+Dv+0.5*Db
+    dcb=0.5*B-dp
+    xbb=ecu*db/((fy/Es)+ecu)
+    ab=beta1*xbb
+    Ag=B*H
+    Nt=2*Nb+2*Nh-4
+    Ccb=0.85*fc*beta1*xbb*H
+    Csb=Ash*(fy-0.85*fc)
+    Tb=Ash*fy
+    Pbb=Ccb+Csb-Tb
+    ebb=(Ccb*(db-ab/2-dcb)+Csb*(db-dp-dcb)+Tb*dcb)/Pbb
+    Mbb=Pbb*ebb
+    
+    #Calculate Pbh
+    Asb=Nb*0.25*PI*Db**2
+    dh=H-cc-Dv-0.5*Db
+    dch=0.5*H-dp
+    xbh=ecu*dh/((fy/Es)+ecu)
+    ah=beta1*xbh
+    Cch=0.85*fc*beta1*xbh*B
+    Csh=Asb*(fy-0.85*fc)
+    Th=Asb*fy
+    Pbh=Cch+Csh-Th
+    ebh=(Cch*(dh-ah/2-dch)+Csh*(dh-dp-dch)+Th*dch)/Pbh
+    Mbh=Pbh*ebh
+
+    
+    #Column capacity - Compression Controlled eh
+    ehmini = 0.6 + 0.03*H
+    
+    delta_eh=(ebh-ehmini)/9
+    
+    str2dPMEh = ""
+    for ii in range(1,10):
+       ehi = ebh - delta_eh*ii#203.2#0.9*ebh
+       #print(f'{ii}: ehi={ehi:.2f}mm')
+       xh0 = 1.025*xbh
+       Cshi = Asb * (fy - 0.85 * fc)
+       k1 = 0.85*fc*B*beta1
+       #Ccb = k1 * xh
+       #es=ecu(d-xh)/xh
+       k2=Asb*Es*ecu
+       #T=k2*(dh-xh)/xh
+       k3=(dch+ehi)
+       
+       #Cubic equation coefficient
+       ca = 0.425*k1 #coefficient a
+       cb = -0.5*k1*(H-2*ehi)
+       cc = -(Cshi*(dch-ehi)-k2*k3)
+       cd = -k2*k3*dh
+ 
+       xhi = newton_raphson_cubic(ca, cb, cc, cd, xh0)
+ 
+       Cchi = k1*xhi
+       Thi  = k2*(dh-xhi)/xhi
+       Pnhi = (Cshi + Cchi - Thi)/1000
+       Mnhi = Pnhi*ehi/1000
+       strPMEh = f'H({ii}): Pn={Pnhi:.2f} kN, Mn={Mnhi:.2f} kNm; '
+       str2dPMEh += strPMEh
+
+
+    #Column capacity - Compression Controlled eb
+    ebmini = 0.6 + 0.03*B
+    delta_eb=(ebb-ebmini)/9
+    
+    str2dPMEb = ""
+    for jj in range(1,10):
+       ebi = ebb - delta_eb*jj#203.2#0.9*ebh
+       #print(f'{ii}: ehi={ehi:.2f}mm')
+       xb0 = 1.025*xbb
+       Csbi = Ash * (fy - 0.85 * fc)
+       k1 = 0.85*fc*H*beta1
+       #Ccb = k1 * xh
+       #es=ecu(d-xh)/xh
+       k2=Ash*Es*ecu
+       #T=k2*(dh-xh)/xh
+       k3=(dcb+ebi)
+       
+       #Cubic equation coefficient
+       ca = 0.425*k1 #coefficient a
+       cb = -0.5*k1*(B-2*ebi)
+       cc = -(Csbi*(dcb-ebi)-k2*k3)
+       cd = -k2*k3*db
+ 
+       xbi = newton_raphson_cubic(ca, cb, cc, cd, xb0)
+ 
+       Ccbi = k1*xbi
+       Tbi  = k2*(db-xbi)/xbi
+       Pnbi = (Csbi + Ccbi - Tbi)/1000
+       Mnbi = Pnbi*ebi/1000
+       strPMEb = f'B({jj}): Pn={Pnbi:.2f} kN, Mn={Mnbi:.2f} kNm; '
+       str2dPMEb += strPMEb
+
+    result = f'Column with ID or name of {Id} have nominal capacity: \n' + str2dPMEb + str2dPMEh
+    return result
+
+
+#strParam = "B: 450, H: 650, Nb: 4, Nh: 8, Db: 12, Dv: 12, fc: 27.58, fy: 414"
+
+
+
+

@@ -59,6 +59,8 @@
 
   <ItemGroup>
     <EmbeddedResource Include="resources\GenaiPyCol01M.txt" />
+    <EmbeddedResource Include="resources\GenaiPyCol02M.txt" />
+    <EmbeddedResource Include="resources\GenaiPyCol02N.txt" />
   </ItemGroup>
 
 </Project>

@@ -67,3 +67,7 @@ dotnet new class -n MyClass -o Models
 
 
 This will create a new class file named MyClass.cs in the Models directory. Adjust the -n and -o options according to your needs.
+
+
+Using .NET CLI to install IronPython
+dotnet add package IronPython

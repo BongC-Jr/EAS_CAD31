@@ -497,58 +497,100 @@ namespace EASI_CAD31
          /**
           *ccParam="B=400\nH=600\nNb=3\nNh=5\nfc=41.47\nfy=414\nDb=20\nDv=10"
           */
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        string resourceName = "EASI_CAD31.resources.GenaiPyCol01M.txt";
-        string pyText = "";
-        using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-        {
+         Assembly assembly = Assembly.GetExecutingAssembly();
+         string resourceName = "EASI_CAD31.resources.GenaiPyCol01M.txt";
+         string pyText = "";
+         using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+         {
             if (stream != null)
             {
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    pyText = reader.ReadToEnd();
-                }
+               using (StreamReader reader = new StreamReader(stream))
+               {
+                  pyText = reader.ReadToEnd();
+               }
             }
             else
             {
-                return "result = f'Resource not found.'";
+               return "result = f'Resource not found.'";
             }
-        }
-        string ccPyScript = ccParam + "\n" + pyText;
-        // string ccPyScript = ccParam + "\n" +
-        //    "PI=3.141593\n" +
-        //    "Es=200000\n" +
-        //    "ecu=0.003\n" +
-        //    "cc=40\n" +
-        //    "beta1=min(max(0.85 - 0.05 * ((fc - 27.58) / 6.9), 0.65), 0.85)\n" +
-        //    "#Calculate Pbc\n" +
-        //    "Ash=Nh*0.25*PI*Db*Db\n" +
-        //    "db=B-cc-Dv-0.5*Db\n" +
-        //    "dp=cc+Dv+0.5*Db\n" +
-        //    "dcb=0.5*B-dp\n" +
-        //    "xbb=ecu*db/((fy/Es)+ecu)\n" +
-        //    "ab=beta1*xbb\n" +
-        //    "Ag=B*H\n" +
-        //    "Nt=2*Nb+2*Nh-4\n" +
-        //    "Ccb=0.85*fc*beta1*xbb*H\n" +
-        //    "Csb=Ash*(fy-0.85*fc)\n" +
-        //    "Tb=Ash*fy\n" +
-        //    "Pbb=Ccb+Csb-Tb\n" +
-        //    "ebb=(Ccb*(db-ab/2-dcb)+Csb*(db-dp-dcb)+Tb*dcb)/Pbb\n" +
-        //    "Mbb=Pbb*ebb\n" +
-        //    "#Calculate Pbh\n" +
-        //    "Asb=Nb*0.25*PI*Db*Db\n" +
-        //    "dh=H-cc-Dv-0.5*Db\n" +
-        //    "dch=0.5*H-dp\n" +
-        //    "xbh=ecu*dh/((fy/Es)+ecu)\n" +
-        //    "ah=beta1*xbh\n" +
-        //    "Cch=0.85*fc*beta1*xbh*B\n" +
-        //    "Csh=Asb*(fy-0.85*fc)\n" +
-        //    "Th=Asb*fy\n" +
-        //    "Pbh=Cch+Csh-Th\n" +
-        //    "ebh=(Cch*(dh-ah/2-dch)+Csh*(dh-dp-dch)+Th*dch)/Pbh\n" +
-        //    "Mbh=Pbh*ebh\n" +
-        //    "result = f'Pbb={Pbb/1000:.2f}kN, Mbb={Mbb/1000000:.2f}kN-m, ebb={ebb:.3f}mm; Pbh={Pbh/1000:.2f}kN, Mbh={Mbh/1000000:.2f}kN-m, ebh={ebh:.3f}mm'";
+         }
+         string ccPyScript = ccParam + "\n" + pyText;
+         // string ccPyScript = ccParam + "\n" +
+         //    "PI=3.141593\n" +
+         //    "Es=200000\n" +
+         //    "ecu=0.003\n" +
+         //    "cc=40\n" +
+         //    "beta1=min(max(0.85 - 0.05 * ((fc - 27.58) / 6.9), 0.65), 0.85)\n" +
+         //    "#Calculate Pbc\n" +
+         //    "Ash=Nh*0.25*PI*Db*Db\n" +
+         //    "db=B-cc-Dv-0.5*Db\n" +
+         //    "dp=cc+Dv+0.5*Db\n" +
+         //    "dcb=0.5*B-dp\n" +
+         //    "xbb=ecu*db/((fy/Es)+ecu)\n" +
+         //    "ab=beta1*xbb\n" +
+         //    "Ag=B*H\n" +
+         //    "Nt=2*Nb+2*Nh-4\n" +
+         //    "Ccb=0.85*fc*beta1*xbb*H\n" +
+         //    "Csb=Ash*(fy-0.85*fc)\n" +
+         //    "Tb=Ash*fy\n" +
+         //    "Pbb=Ccb+Csb-Tb\n" +
+         //    "ebb=(Ccb*(db-ab/2-dcb)+Csb*(db-dp-dcb)+Tb*dcb)/Pbb\n" +
+         //    "Mbb=Pbb*ebb\n" +
+         //    "#Calculate Pbh\n" +
+         //    "Asb=Nb*0.25*PI*Db*Db\n" +
+         //    "dh=H-cc-Dv-0.5*Db\n" +
+         //    "dch=0.5*H-dp\n" +
+         //    "xbh=ecu*dh/((fy/Es)+ecu)\n" +
+         //    "ah=beta1*xbh\n" +
+         //    "Cch=0.85*fc*beta1*xbh*B\n" +
+         //    "Csh=Asb*(fy-0.85*fc)\n" +
+         //    "Th=Asb*fy\n" +
+         //    "Pbh=Cch+Csh-Th\n" +
+         //    "ebh=(Cch*(dh-ah/2-dch)+Csh*(dh-dp-dch)+Th*dch)/Pbh\n" +
+         //    "Mbh=Pbh*ebh\n" +
+         //    "result = f'Pbb={Pbb/1000:.2f}kN, Mbb={Mbb/1000000:.2f}kN-m, ebb={ebb:.3f}mm; Pbh={Pbh/1000:.2f}kN, Mbh={Mbh/1000000:.2f}kN-m, ebh={ebh:.3f}mm'";
+         return ccPyScript;
+      }
+
+      public string NominalColumnCapacityPyScript(string strParam)
+      {
+         Assembly assembly = Assembly.GetExecutingAssembly();
+         string resourceName1 = "EASI_CAD31.resources.GenaiPyCol02M.txt";
+         string pyText1 = "";
+         using (Stream stream = assembly.GetManifestResourceStream(resourceName1))
+         {
+            if (stream != null)
+            {
+               using (StreamReader reader = new StreamReader(stream))
+               {
+                  pyText1 = reader.ReadToEnd();
+               }
+            }
+            else
+            {
+               return "result = f'Resource not found.'";
+            }
+         }
+
+         string resourceName2 = "EASI_CAD31.resources.GenaiPyCol02N.txt";
+         string pyText2 = "";
+         using (Stream stream = assembly.GetManifestResourceStream(resourceName2))
+         {
+            if (stream != null)
+            {
+               using (StreamReader reader = new StreamReader(stream))
+               {
+                  pyText2 = reader.ReadToEnd();
+               }
+            }
+            else
+            {
+               return "result = f'Resource not found.'";
+            }
+         }
+
+         string pyParam = $"strParam='{strParam}'";
+         string ccPyScript = pyText1 + $"\n{pyParam}\n" + pyText2;
          return ccPyScript;
       }
    }
