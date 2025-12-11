@@ -13,6 +13,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
+using Autodesk.AutoCAD.DatabaseServices.Filters;
+using IronPython.Runtime.Operations;
+
 
 namespace EASI_CAD31
 {
@@ -35,6 +39,13 @@ namespace EASI_CAD31
         // Default google sheet
         /* https://docs.google.com/spreadsheets/d/1ZGy2rFLEkVEQF4DunspHXn5umcu14udCRT31YycHrQs/edit#gid=0 */
         static string gshtIdG = "1ZGy2rFLEkVEQF4DunspHXn5umcu14udCRT31YycHrQs";
+
+        static string DSS_gshtIdG = "Enter you google sheet ID here";
+        static string DSS_rangeAddrG = "Sheet1!A?:H?";
+        static int DSS_RowNumG = 1;
+        static string DSS_IndexNoG = "1,2,3,5,7";
+        static string DSS_other_paramsG = "250,1.0"; //text height and scale
+
 
         /**
          * Date added: 21 February 2024
@@ -564,5 +575,156 @@ namespace EASI_CAD31
             Point3d rotPt = new Point3d(X, Y, pointToRotate.Z);
             return rotPt;
         }
+
+
+      [CommandMethod("DSS_DrawSteelSection")]
+      public static void DrawSteelSection()
+      {
+         try
+         {
+            if (!ccData.isLicenseActive())
+            {
+
+               actDoc.Editor.WriteMessage("\n" + ccData.getLicenseNote());
+               return;
+            }
+
+            PromptIntegerOptions pioRangeRow = new PromptIntegerOptions("");
+            pioRangeRow.DefaultValue = DSS_RowNumG;
+            pioRangeRow.Message = "\nEnter row number:  ";
+            pioRangeRow.AllowNegative = false;
+            pioRangeRow.AllowZero = false;
+            PromptIntegerResult pirRangeRow = actDoc.Editor.GetInteger(pioRangeRow);
+            if(pirRangeRow.Status != PromptStatus.OK) return;
+            int rangeRow = pirRangeRow.Value;
+            DSS_RowNumG = rangeRow;
+            actDoc.Editor.WriteMessage($"\nRow number: {DSS_RowNumG}");
+
+            PromptStringOptions psoRangeAddr = new PromptStringOptions("");
+            psoRangeAddr.DefaultValue = DSS_rangeAddrG;
+            psoRangeAddr.Message = "\nEnter cell range address: ";
+            psoRangeAddr.AllowSpaces = false;
+            PromptResult prRangeAddr = actDoc.Editor.GetString(psoRangeAddr);
+            if(prRangeAddr.Status != PromptStatus.OK) return;
+            string rangeAddr = prRangeAddr.StringResult;
+            DSS_rangeAddrG = rangeAddr;
+            actDoc.Editor.WriteMessage($"\nCell range address: {DSS_rangeAddrG}");
+
+            PromptStringOptions psoIndexNo = new PromptStringOptions("");
+            psoIndexNo.DefaultValue = DSS_IndexNoG;
+            psoIndexNo.Message = "\nEnter index number of Label, D, tw, bf, tf: ";
+            psoIndexNo.AllowSpaces = false;
+            PromptResult prIndexNo = actDoc.Editor.GetString(psoIndexNo);
+            if(prIndexNo.Status != PromptStatus.OK) return;
+            string indexNo = prIndexNo.StringResult;
+            DSS_IndexNoG = indexNo;
+            actDoc.Editor.WriteMessage($"\nIndex numbers: {indexNo}");
+            int[] arrIndex = indexNo.Split(',').Select(int.Parse).ToArray();
+
+            PromptStringOptions psoDSS_GSheetID = new PromptStringOptions("");
+            psoDSS_GSheetID.DefaultValue = DSS_gshtIdG;
+            psoDSS_GSheetID.Message = "\nEnter Google Spreadsheet ID: ";
+            psoDSS_GSheetID.AllowSpaces = false;
+            PromptResult prDSS_GSheetID = actDoc.Editor.GetString(psoDSS_GSheetID);
+            if(prDSS_GSheetID.Status != PromptStatus.OK) return;
+            string dss_spreadSheetID = prDSS_GSheetID.StringResult;
+            DSS_gshtIdG = dss_spreadSheetID;
+            actDoc.Editor.WriteMessage($"\nSpreadsheet ID: {DSS_gshtIdG}");
+
+            PromptStringOptions psoOtherParams = new PromptStringOptions("");
+            psoOtherParams.DefaultValue = DSS_other_paramsG;
+            psoOtherParams.Message = "\nEnter Text Height,Scale): ";
+            psoOtherParams.AllowSpaces = false;
+            PromptResult prOtherParams = actDoc.Editor.GetString(psoOtherParams);
+            if(prOtherParams.Status != PromptStatus.OK) return;
+            string other_params = prOtherParams.StringResult;
+            DSS_other_paramsG = other_params;
+            double[] arrOParams = other_params.Split(',').Select(double.Parse).ToArray();
+
+            PromptPointOptions ppoDSS = new PromptPointOptions("\nSpecify insertion point: ");
+            ppoDSS.AllowNone = false;
+            PromptPointResult pprDSS = actDoc.Editor.GetPoint(ppoDSS);
+            if(pprDSS.Status != PromptStatus.OK) return;
+            Point3d p3dInsDSS = pprDSS.Value;
+
+            IList<IList<object>> iioDSS_BeamSched = DSSGetRange(rangeRow, rangeAddr, dss_spreadSheetID);
+            
+            string ssdes_L = iioDSS_BeamSched[0][arrIndex[0]-1] != null ? iioDSS_BeamSched[0][arrIndex[0]-1].ToString() : "-";
+            actDoc.Editor.WriteMessage($"\nSection depth label: {ssdes_L}");
+            double ssdep_h = iioDSS_BeamSched[0][arrIndex[1]-1] != null ? Convert.ToDouble(iioDSS_BeamSched[0][arrIndex[1]-1])*arrOParams[1] : 0.0;
+            actDoc.Editor.WriteMessage($"\nSection depth: {ssdep_h}");
+            double sstw_tw = iioDSS_BeamSched[0][arrIndex[2]-1] != null ? Convert.ToDouble(iioDSS_BeamSched[0][arrIndex[2]-1])*arrOParams[1] : 0.0;
+            actDoc.Editor.WriteMessage($"\nSection web thickness: {sstw_tw}");
+            double ssbf_bf = iioDSS_BeamSched[0][arrIndex[3]-1] != null ? Convert.ToDouble(iioDSS_BeamSched[0][arrIndex[3]-1])*arrOParams[1] : 0.0;
+            actDoc.Editor.WriteMessage($"\nSection flange breadth: {ssbf_bf}");  
+            double sstf_tf = iioDSS_BeamSched[0][arrIndex[4]-1] != null ? Convert.ToDouble(iioDSS_BeamSched[0][arrIndex[4]-1])*arrOParams[1] : 0.0;
+            actDoc.Editor.WriteMessage($"\nSection flange thickness: {sstf_tf}");
+
+            using(Transaction trDSS = aCurDB.TransactionManager.StartTransaction())
+            {
+               BlockTable btDSS = (BlockTable)trDSS.GetObject(aCurDB.BlockTableId, OpenMode.ForRead);
+               BlockTableRecord btrDSS = (BlockTableRecord)trDSS.GetObject(btDSS[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+
+               Point2d p2dVtx1 = new Point2d(p3dInsDSS.X, p3dInsDSS.Y);
+               Point2d p2dVtx2 = new Point2d(p2dVtx1.X + ssbf_bf, p2dVtx1.Y);
+               Point2d p2dVtx3 = new Point2d(p2dVtx2.X, p2dVtx2.Y + sstf_tf);
+               Point2d p2dVtx4 = new Point2d(p2dVtx3.X - 0.5 * ssbf_bf + 0.5 * sstw_tw, p2dVtx3.Y);
+               Point2d p2dVtx5 = new Point2d(p2dVtx4.X, p2dVtx4.Y + ssdep_h-2* sstf_tf);
+               Point2d p2dVtx6 = new Point2d(p2dVtx5.X + 0.5*ssbf_bf-0.5*sstw_tw, p2dVtx5.Y);
+               Point2d p2dVtx7 = new Point2d(p2dVtx6.X, p2dVtx6.Y + sstf_tf);
+               Point2d p2dVtx8 = new Point2d(p2dVtx7.X - ssbf_bf, p2dVtx7.Y);
+               Point2d p2dVtx9 = new Point2d(p2dVtx8.X, p2dVtx8.Y - sstf_tf);
+               Point2d p2dVtx10 = new Point2d(p2dVtx9.X+0.5*ssbf_bf-0.5*sstw_tw, p2dVtx9.Y);
+               Point2d p2dVtx11 = new Point2d(p2dVtx10.X, p2dVtx10.Y - ssdep_h + 2* sstf_tf);
+               Point2d p2dVtx12 = new Point2d(p2dVtx11.X - 0.5* ssbf_bf + 0.5* sstw_tw, p2dVtx11.Y);
+
+               Polyline plineSection = new Polyline();
+               plineSection.AddVertexAt(0, p2dVtx1, 0, 0, 0);
+               plineSection.AddVertexAt(1, p2dVtx2, 0, 0, 0);
+               plineSection.AddVertexAt(2, p2dVtx3, 0, 0, 0);
+               plineSection.AddVertexAt(3, p2dVtx4, 0, 0, 0);
+               plineSection.AddVertexAt(4, p2dVtx5, 0, 0, 0);
+               plineSection.AddVertexAt(5, p2dVtx6, 0, 0, 0);
+               plineSection.AddVertexAt(6, p2dVtx7, 0, 0, 0);
+               plineSection.AddVertexAt(7, p2dVtx8, 0, 0, 0);
+               plineSection.AddVertexAt(8, p2dVtx9, 0, 0, 0);
+               plineSection.AddVertexAt(9, p2dVtx10, 0, 0, 0);
+               plineSection.AddVertexAt(10, p2dVtx11, 0, 0, 0);
+               plineSection.AddVertexAt(11, p2dVtx12, 0, 0, 0);
+               plineSection.Closed = true;
+
+               btrDSS.AppendEntity(plineSection);
+               trDSS.AddNewlyCreatedDBObject(plineSection, true);
+
+               //Add text label
+               DBText dbTextDSS = new DBText();
+               dbTextDSS.Position = new Point3d(p2dVtx1.X + ssbf_bf/2, p2dVtx1.Y - arrOParams[0]*2, 0);
+               dbTextDSS.Height = arrOParams[0];
+               dbTextDSS.TextString = ssdes_L;
+               dbTextDSS.HorizontalMode = TextHorizontalMode.TextCenter;
+               dbTextDSS.VerticalMode = TextVerticalMode.TextVerticalMid;
+               dbTextDSS.AlignmentPoint = new Point3d(dbTextDSS.Position.X, dbTextDSS.Position.Y, 0);
+               btrDSS.AppendEntity(dbTextDSS);
+               trDSS.AddNewlyCreatedDBObject(dbTextDSS, true);
+
+               trDSS.Commit();
+            }
+         }
+         catch (Autodesk.AutoCAD.Runtime.Exception e)
+         {
+            actDoc.Editor.WriteMessage($"\nError DSS: {e.Message}");
+         }
+
+      }
+
+      public static IList<IList<object>> DSSGetRange(int rowNumt0p, string rangeAddrt0p, string spreadSheetID)
+      {
+         string shtRange = Regex.Replace(rangeAddrt0p, @"\?", rowNumt0p.ToString());
+         SpreadsheetsResource.ValuesResource.GetRequest grBeamSched = DataGlobal.sheetsService.Spreadsheets.Values.Get(spreadSheetID, shtRange);
+         ValueRange vrBeamSched = grBeamSched.Execute();
+         IList<IList<object>> iioBeamSched = vrBeamSched.Values;
+          
+         return iioBeamSched;
+      }
     }
 }

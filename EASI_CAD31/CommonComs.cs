@@ -178,6 +178,48 @@ namespace EASI_CAD31
             actDoc.Editor.WriteMessage("\nEnd of list.");
         }
 
+      /**
+         * Author: Bernardo A. Cabebe Jr.
+         * Date: 03 June 2024 11:48am
+         * Vanue: 3407 Cityland Pasong Tamo Tower
+         */
+      [CommandMethod("AIP_AIPoint")]
+      public static void AIPoint()
+      {
+         PromptPointOptions ppoAiP = new PromptPointOptions("");
+         ppoAiP.Message = "\nCreate reference point: ";
+         PromptPointResult pprAiP = actDoc.Editor.GetPoint(ppoAiP);
+         Point3d p3dAiP = pprAiP.Value;
+
+         if (pprAiP.Status != PromptStatus.OK)
+         {
+            actDoc.Editor.WriteMessage("\nCommand cancelled");
+            return;
+         }
+
+         using (Transaction trAiP = aCurDB.TransactionManager.StartTransaction())
+         {
+            BlockTable acBlkTbl;
+            acBlkTbl = trAiP.GetObject(aCurDB.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+            BlockTableRecord aBTblRec;
+            aBTblRec = trAiP.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+            string layerNamet0y = "Cai_Column_Refpoint";
+            SEASTools stools = new SEASTools();
+            stools.CreateLayer(layerNamet0y, 111, true);
+
+            using (DBPoint dbpAiP = new DBPoint(p3dAiP))
+            {
+               dbpAiP.ColorIndex = 111;
+               dbpAiP.Layer = layerNamet0y;
+               aBTblRec.AppendEntity(dbpAiP);
+               trAiP.AddNewlyCreatedDBObject(dbpAiP, true);
+            }
+            trAiP.Commit();
+         }
+
+      }
 
       [CommandMethod("DMO_DevMessageOn")]
       public static void DevMessageOn()

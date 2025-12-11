@@ -316,8 +316,65 @@ namespace EASI_CAD31
          string layerName = "_+" + shuffledText.Substring(0, 6);
          sTools.CreateLayer(layerName, 3, true);
 
+         TypedValue[] tvFiltert0y = new TypedValue[3];
+         tvFiltert0y[0] = new TypedValue((int)DxfCode.Start, "POINT");
+         tvFiltert0y[1] = new TypedValue((int)DxfCode.LayerName, "Cai_Column_Refpoint");
+         tvFiltert0y[2] = new TypedValue((int)DxfCode.Color, 111);
+         SelectionFilter sfAiP = new SelectionFilter(tvFiltert0y);
+         PromptSelectionResult psrAiP = actDoc.Editor.SelectAll(sfAiP);
+         string userContentTxt = "";
+         string convo = "";
+         if (psrAiP.Status != PromptStatus.OK)
+         {
+            userContentTxt = $"user: {DataGlobal.UserMessage}";
+            // Create or append to the file
+            sTools.LogConversation(userContentTxt);
+
+            convo = $"Command execution cancelled... Exit...";
+            sTools.LogConversation("model: " + convo);
+            actDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+            return;
+         }
+
+         SelectionSet ssAiP = psrAiP.Value;
+         if (ssAiP.Count > 1)
+         {
+            userContentTxt = $"user: {DataGlobal.UserMessage}";
+            // Create or append to the file
+            sTools.LogConversation(userContentTxt);
+
+            convo = $"You have more than one AI reference point. Command execution cancelled. Exit...";
+
+            sTools.LogConversation("model: " + convo);
+            actDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+            return;
+         }
+
+         Point3d p3dAiPt0y; // = new Point3d();
+         using (Transaction trAiPt0y = aCurDB.TransactionManager.StartTransaction())
+         {
+            ObjectId oidAiP = ssAiP[0].ObjectId;
+            DBPoint dbpAiPt0y = trAiPt0y.GetObject(oidAiP, OpenMode.ForRead) as DBPoint;
+            if (dbpAiPt0y == null)
+            {
+               userContentTxt = $"user: {DataGlobal.UserMessage}";
+               // Create or append to the file
+               sTools.LogConversation(userContentTxt);
+
+               convo = $"Command error. Exit...";
+
+               sTools.LogConversation("model: " + convo);
+               actDoc.Editor.WriteMessage($"\n{"Assistant: " + convo}\n");
+               return;
+            }
+            p3dAiPt0y = dbpAiPt0y.Position;
+         }
+
          Editor curEd = actDoc.Editor;
-         Point2d curEdCtr = curEd.GetCurrentView().CenterPoint;
+
+         //Point2d curEdCtr = curEd.GetCurrentView().CenterPoint;
+         Point2d curEdCtr = new Point2d(p3dAiPt0y.X, p3dAiPt0y.Y);
+
          double cW = arrDblParam[0]; // column width
          double cH = arrDblParam[1]; // column depth
          Point2d pA1 = new Point2d(curEdCtr.X - cW / 2, curEdCtr.Y + cH / 2);
@@ -333,6 +390,10 @@ namespace EASI_CAD31
                blktbl = tr.GetObject(aCurDB.BlockTableId, OpenMode.ForRead) as BlockTable;
                BlockTableRecord blktbr;
                blktbr = tr.GetObject(blktbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+               ObjectId oidAiP = ssAiP[0].ObjectId;
+               DBPoint dbpAiPt0y = tr.GetObject(oidAiP, OpenMode.ForWrite) as DBPoint;
+               dbpAiPt0y.Erase();
 
                Polyline plCol = new Polyline();
                plCol.AddVertexAt(0, pA1, 0, 0, 0);
@@ -579,9 +640,6 @@ namespace EASI_CAD31
                genaico.DrawOpenTieB(ddPt1, ddPt2, verBarDia, tieBarDia, layerName, 5);
             }
          }
-
-         string userContentTxt = "";
-         string convo = "";
          
          userContentTxt = $"user: {DataGlobal.UserMessage}";
          // Create or append to the file

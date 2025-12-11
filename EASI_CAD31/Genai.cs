@@ -243,6 +243,7 @@ namespace EASI_CAD31
          Thread.Sleep(300);
          // URL to send the POST request to
          string url = "http://127.0.0.1:7788/aibot/cai_d4h?v1=dfg84j567";
+         //string url = "https://neuronet-ai-innovations.com/aibot/cai_d4h?v1=dfg84j567";
 
          string currentPath = Application.DocumentManager.MdiActiveDocument.Database.Filename;
          string currentDirectory = "";
